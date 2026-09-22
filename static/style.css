@@ -7,6 +7,15 @@
   --accent-dark: #c76f24;
   --border: #eee0d3;
   --danger: #c0392b;
+  /* 分類色系: 每種紀錄類型有自己的顏色, 卡片左側色條+標題icon圓點用, 增加視覺區隔 */
+  --c-weight: #4f7a8c;
+  --c-bcs: #6a8c4f;
+  --c-vet: #8c4f6a;
+  --c-vaccine: #7a4f8c;
+  --c-deworming: #8c6a4f;
+  --c-lab: #4f8c7a;
+  --c-diet: #e08a3e;
+  --c-reminder: #c76f24;
 }
 
 * { box-sizing: border-box; }
@@ -14,14 +23,19 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 6% 12%, rgba(224,138,62,.07) 0, transparent 45%),
+    radial-gradient(circle at 94% 85%, rgba(106,140,79,.06) 0, transparent 45%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
 }
 
 header {
   padding: 16px 20px;
-  background: var(--card-bg);
+  background: linear-gradient(180deg, #fffdfa 0%, var(--card-bg) 100%);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(224,138,62,.12);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -50,17 +64,27 @@ main { max-width: 760px; margin: 0 auto; padding: 20px; }
 .pet-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 16px;
   width: 160px;
   cursor: pointer;
-  transition: box-shadow .15s;
+  transition: box-shadow .15s, transform .15s, border-color .15s;
 }
-.pet-card:hover { box-shadow: 0 4px 16px rgba(224,138,62,.18); transform: translateY(-1px); border-color: var(--accent); }
-.pet-card { transition: box-shadow .15s, transform .15s, border-color .15s; }
-.pet-card .emoji { font-size: 2rem; }
-.pet-card h3 { margin: 8px 0 4px; }
+.pet-card:hover { box-shadow: 0 6px 18px rgba(224,138,62,.2); transform: translateY(-2px); border-color: var(--accent); }
+.pet-card .emoji {
+  font-size: 1.7rem; width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #fbeedd, #f6dcc0);
+}
+.pet-card.species-cat .emoji { background: linear-gradient(135deg, #efe3f5, #e2cdf0); }
+.pet-card h3 { margin: 10px 0 4px; }
 .pet-card p { margin: 0; color: var(--muted); font-size: .85rem; }
+
+.product-card .emoji {
+  font-size: 1.5rem; width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #fbeedd, #f6dcc0); margin-bottom: 8px;
+}
 
 .tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--border); overflow-x: auto; }
 .tab-btn {
@@ -72,9 +96,11 @@ main { max-width: 760px; margin: 0 auto; padding: 20px; }
 .tab-panel.active { display: block; }
 
 .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.stat-card { margin-bottom: 0; text-align: center; }
+.stat-card { margin-bottom: 0; text-align: center; border-top: 3px solid var(--accent); border-radius: 0 0 12px 12px; }
+.stat-card:nth-child(2) { border-top-color: var(--c-bcs); }
+.stat-card:nth-child(3) { border-top-color: var(--c-diet); }
 .stat-label { color: var(--muted); font-size: .8rem; margin-bottom: 4px; }
-.stat-value { font-size: 1.3rem; font-weight: 600; color: var(--accent-dark); }
+.stat-value { font-size: 1.4rem; font-weight: 700; color: var(--accent-dark); }
 .stat-value.goal-hit { color: #2e7d32; }
 
 .platform-status { display: flex; flex-wrap: wrap; gap: 8px; font-size: .8rem; margin-bottom: 12px; }
@@ -85,11 +111,22 @@ main { max-width: 760px; margin: 0 auto; padding: 20px; }
 .card {
   background: var(--card-bg);
   border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
 }
 .card h3 { margin-top: 0; }
+
+/* 分類色條: 每張卡片依內容類型上不同色, 不再每張卡片都長一樣 */
+.card.accent-weight { border-left-color: var(--c-weight); }
+.card.accent-bcs { border-left-color: var(--c-bcs); }
+.card.accent-vet { border-left-color: var(--c-vet); }
+.card.accent-vaccine { border-left-color: var(--c-vaccine); }
+.card.accent-deworming { border-left-color: var(--c-deworming); }
+.card.accent-lab { border-left-color: var(--c-lab); }
+.card.accent-diet { border-left-color: var(--c-diet); }
+.card.accent-reminder { border-left-color: var(--c-reminder); }
 
 .inline-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 .inline-form input, .inline-form select {
@@ -126,6 +163,18 @@ main { max-width: 760px; margin: 0 auto; padding: 20px; }
   display: inline-block; font-size: .75rem; padding: 1px 6px; border-radius: 6px;
   background: #fbeedd; color: var(--accent-dark); margin-right: 6px;
 }
+.empty-hint {
+  justify-content: center; border: 1px dashed var(--border); border-radius: 10px;
+  color: var(--muted); padding: 16px 8px; text-align: center; display: flex;
+}
+
+.category-tag {
+  display: inline-block; font-size: .75rem; padding: 1px 8px; border-radius: 6px; margin-right: 6px; color: white;
+}
+.category-tag.cat-零食 { background: #b85c8a; }
+.category-tag.cat-飼料 { background: var(--c-diet); }
+.category-tag.cat-保健品 { background: var(--c-lab); }
+.category-tag.cat-用品 { background: var(--c-weight); }
 
 .diet-result { font-size: .95rem; line-height: 1.6; }
 

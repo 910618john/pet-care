@@ -65,9 +65,13 @@ async function loadPets() {
   const pets = await api("/api/pets");
   const container = $("petCards");
   container.innerHTML = "";
+  if (pets.length === 0) {
+    container.innerHTML = `<div class="empty-hint">🐾 還沒有寵物資料，點右上「+ 新增寵物」開始記錄第一隻的健康日誌吧！</div>`;
+    return;
+  }
   for (const pet of pets) {
     const card = document.createElement("div");
-    card.className = "pet-card";
+    card.className = `pet-card species-${pet.species}`;
     card.innerHTML = `<div class="emoji">${SPECIES_EMOJI[pet.species] || "🐾"}</div><h3>${escapeHtml(pet.name)}</h3><p>${escapeHtml(pet.breed || "")}</p>`;
     card.addEventListener("click", () => openDashboard(pet.id));
     container.appendChild(card);
@@ -215,7 +219,7 @@ async function loadTimeline() {
   const renderList = (ul, items) => {
     ul.innerHTML = "";
     if (items.length === 0) {
-      ul.innerHTML = `<li>尚無紀錄</li>`;
+      ul.innerHTML = `<li class="empty-hint">📭 尚無紀錄</li>`;
       return;
     }
     for (const e of items) {
@@ -235,7 +239,7 @@ async function loadReminderHistory() {
   const ul = $("reminderHistoryList");
   ul.innerHTML = "";
   if (mine.length === 0) {
-    ul.innerHTML = `<li>尚無推播紀錄</li>`;
+    ul.innerHTML = `<li class="empty-hint">🔕 尚無推播紀錄</li>`;
     return;
   }
   for (const r of mine) {
@@ -375,6 +379,7 @@ $("dietForm").addEventListener("submit", async (e) => {
 
 // ======================= 用品比價 =======================
 const PLATFORM_LABELS = { pchome: "PChome" };
+const CATEGORY_EMOJI = { 零食: "🍖", 飼料: "🥣", 保健品: "💊", 用品: "🧸" };
 
 async function loadPlatformStatus() {
   const platforms = await api("/api/platforms");
@@ -393,13 +398,13 @@ async function loadProducts() {
   const container = $("productCards");
   container.innerHTML = "";
   if (products.length === 0) {
-    container.innerHTML = `<p class="hint">還沒有追蹤商品，點右上「+ 新增商品」開始追蹤零食/飼料/保健品/用品的價格。</p>`;
+    container.innerHTML = `<div class="empty-hint">🛒 還沒有追蹤商品，點右上「+ 新增商品」開始追蹤零食/飼料/保健品/用品的價格。</div>`;
     return;
   }
   for (const product of products) {
     const card = document.createElement("div");
-    card.className = "pet-card";
-    card.innerHTML = `<h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.category)}</p>`;
+    card.className = "pet-card product-card";
+    card.innerHTML = `<div class="emoji">${CATEGORY_EMOJI[product.category] || "📦"}</div><h3>${escapeHtml(product.name)}</h3><span class="category-tag cat-${product.category}">${escapeHtml(product.category)}</span>`;
     card.addEventListener("click", () => openProductDashboard(product.id));
     container.appendChild(card);
   }
@@ -478,7 +483,7 @@ async function loadProductListings() {
   const ul = $("productListingList");
   ul.innerHTML = "";
   if (rows.length === 0) {
-    ul.innerHTML = `<li>尚未抓到任何在架商品。新增商品後要等排程(或手動觸發 /api/internal/run-product-scrape)跑過一次才會有資料。</li>`;
+    ul.innerHTML = `<li class="empty-hint">⏳ 尚未抓到任何在架商品。新增商品後要等排程(或手動觸發 /api/internal/run-product-scrape)跑過一次才會有資料。</li>`;
     return;
   }
   for (const r of rows) {

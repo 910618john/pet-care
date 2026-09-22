@@ -62,15 +62,42 @@ const BREED_SUGGESTIONS = {
         "埃及貓", "曼赤肯貓"],
 };
 
+// 自製品種下拉建議清單(取代<input list>+<datalist>—— iOS Safari對datalist支援很差,
+// 完全不顯示下拉箭頭、建議清單常常不出現, 自己刻一個才能跨裝置行為一致)。
+let currentBreedSpecies = "dog";
+
 function updateBreedOptions(species) {
-  const list = $("breedOptions");
-  list.innerHTML = "";
-  for (const breed of BREED_SUGGESTIONS[species] || []) {
-    const opt = document.createElement("option");
-    opt.value = breed;
-    list.appendChild(opt);
-  }
+  currentBreedSpecies = species;
+  renderBreedSuggestions();
 }
+
+function renderBreedSuggestions() {
+  const input = $("breedInput");
+  const dropdown = $("breedSuggestions");
+  const query = input.value.trim().toLowerCase();
+  const pool = BREED_SUGGESTIONS[currentBreedSpecies] || [];
+  const matches = query ? pool.filter((b) => b.toLowerCase().includes(query)) : pool;
+  dropdown.innerHTML = "";
+  if (matches.length === 0) {
+    dropdown.style.display = "none";
+    return;
+  }
+  for (const breed of matches) {
+    const li = document.createElement("li");
+    li.textContent = breed;
+    li.addEventListener("mousedown", (e) => {
+      e.preventDefault(); // 防止input的blur事件搶先觸發, 導致click還沒收到就先把清單藏起來
+      input.value = breed;
+      dropdown.style.display = "none";
+    });
+    dropdown.appendChild(li);
+  }
+  dropdown.style.display = "block";
+}
+
+$("breedInput").addEventListener("focus", renderBreedSuggestions);
+$("breedInput").addEventListener("input", renderBreedSuggestions);
+$("breedInput").addEventListener("blur", () => { $("breedSuggestions").style.display = "none"; });
 
 // ======================= 頂層導覽 (我的寵物 / 每月花費 / 寵物狀態 / 用品價格) =======================
 const TOP_VIEW_SECTIONS = {

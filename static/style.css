@@ -240,6 +240,23 @@ main { max-width: 860px; margin: 0 auto; padding: 20px; }
 }
 .modal-content input[type="checkbox"] { width: auto; margin: 0; }
 
+/* 品種輸入框: 原本用<input list>+<datalist>做建議清單, 但iOS Safari對datalist支援很差
+   (完全不顯示下拉箭頭, 建議清單常常不出現), 改成自己刻一個下拉清單元件, 跨裝置行為一致 */
+.breed-select-wrapper { position: relative; margin-top: 4px; }
+.breed-select-wrapper input { width: 100%; padding: 8px 28px 8px 8px; border: 1px solid var(--border); border-radius: 8px; }
+.breed-select-arrow {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); pointer-events: none; font-size: .8rem;
+}
+.suggestion-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50;
+  background: white; border: 1px solid var(--border); border-radius: 8px;
+  max-height: 180px; overflow-y: auto; list-style: none; margin: 0; padding: 4px 0;
+  box-shadow: 0 4px 16px rgba(43,35,32,.12);
+}
+.suggestion-dropdown li { padding: 8px 12px; font-size: .88rem; cursor: pointer; }
+.suggestion-dropdown li:hover, .suggestion-dropdown li:active { background: var(--bg); }
+
 /* 手機寬度: panel/main的內距在小螢幕上太浪費空間, 縮小一點讓卡片有更多可用寬度;
    統計列在窄螢幕上固定欄數並排, 不要因為minmax太大而擠成直排(狗/貓兩張、總覽體重/BCS/目標三張) */
 @media (max-width: 480px) {

@@ -311,8 +311,13 @@
           <option value="cat">貓</option>
         </select>
       </label>
-      <label>品種 <input type="text" name="breed" list="breedOptions" placeholder="可直接打字或從建議清單選"></label>
-      <datalist id="breedOptions"></datalist>
+      <label>品種
+        <div class="breed-select-wrapper">
+          <input type="text" name="breed" id="breedInput" placeholder="可直接打字或從建議清單選" autocomplete="off">
+          <span class="breed-select-arrow">▾</span>
+          <ul id="breedSuggestions" class="suggestion-dropdown" style="display:none;"></ul>
+        </div>
+      </label>
       <label>生日 <input type="date" name="birthday"></label>
       <label>性別
         <select name="sex">

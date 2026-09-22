@@ -33,6 +33,25 @@ function formatAge(birthday) {
   return `${years}歲${remMonths}個月`;
 }
 
+// 距離下一次生日(今年的生日已過就算明年的)還有幾天, 0代表今天就是生日
+function daysUntilBirthday(birthday) {
+  if (!birthday) return null;
+  const born = new Date(birthday);
+  if (Number.isNaN(born.getTime())) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let next = new Date(now.getFullYear(), born.getMonth(), born.getDate());
+  if (next < today) next = new Date(now.getFullYear() + 1, born.getMonth(), born.getDate());
+  return Math.round((next - today) / 86400000);
+}
+
+function birthdayCountdownText(birthday) {
+  const days = daysUntilBirthday(birthday);
+  if (days === null) return "";
+  if (days === 0) return "🎉 今天生日！";
+  return `🎁 還有${days}天生日`;
+}
+
 // 品種輸入框的建議清單(datalist), 只是常見選項方便快速選, 使用者仍可自己打任何字(混種/罕見品種等)
 const BREED_SUGGESTIONS = {
   dog: ["米克斯(混種)", "柴犬", "貴賓犬(泰迪)", "法國鬥牛犬", "黃金獵犬", "拉布拉多", "吉娃娃", "雪納瑞",
@@ -98,7 +117,9 @@ async function loadPets() {
     const card = document.createElement("div");
     card.className = `pet-card species-${pet.species}`;
     const age = formatAge(pet.birthday);
-    card.innerHTML = `<div class="emoji">${SPECIES_EMOJI[pet.species] || "🐾"}</div><h3>${escapeHtml(pet.name)}</h3><p>${escapeHtml(pet.breed || "")}</p>${age ? `<p class="pet-card-age">🎂 ${age}</p>` : ""}`;
+    const ageLine = pet.birthday ? `🎂 ${pet.birthday}${age ? `（${age}）` : ""}` : "";
+    const countdown = birthdayCountdownText(pet.birthday);
+    card.innerHTML = `<div class="emoji">${SPECIES_EMOJI[pet.species] || "🐾"}</div><h3>${escapeHtml(pet.name)}</h3><p>${escapeHtml(pet.breed || "")}</p>${ageLine ? `<p class="pet-card-age">${ageLine}</p>` : ""}${countdown ? `<p class="pet-card-age">${countdown}</p>` : ""}`;
     card.addEventListener("click", () => openDashboard(pet.id));
     container.appendChild(card);
   }
@@ -165,7 +186,8 @@ async function openDashboard(petId) {
   $("petDashboard").style.display = "block";
   $("dashPetName").textContent = `${SPECIES_EMOJI[pet.species] || "🐾"} ${pet.name}`;
   const dashAge = formatAge(pet.birthday);
-  $("dashPetMeta").textContent = [pet.breed, pet.birthday ? `生日 ${pet.birthday}${dashAge ? `(${dashAge})` : ""}` : "", pet.neutered ? "已絕育" : "未絕育", pet.microchip_id ? `晶片 ${pet.microchip_id}` : ""].filter(Boolean).join(" · ");
+  const dashCountdown = birthdayCountdownText(pet.birthday);
+  $("dashPetMeta").textContent = [pet.breed, pet.birthday ? `生日 ${pet.birthday}${dashAge ? `(${dashAge})` : ""}` : "", dashCountdown, pet.neutered ? "已絕育" : "未絕育", pet.microchip_id ? `晶片 ${pet.microchip_id}` : ""].filter(Boolean).join(" · ");
   $("editPetBtn").onclick = () => openPetForm(pet);
   $("deletePetBtn").onclick = async () => {
     if (!confirm(`確定要刪除「${pet.name}」及其所有紀錄嗎？`)) return;

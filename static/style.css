@@ -220,12 +220,13 @@ main { max-width: 860px; margin: 0 auto; padding: 20px; }
 .modal-content input[type="checkbox"] { width: auto; margin: 0; }
 
 /* 手機寬度: panel/main的內距在小螢幕上太浪費空間, 縮小一點讓卡片有更多可用寬度;
-   統計列(寵物總數/狗/貓)在窄螢幕上維持三欄並排, 不要因為minmax太大而擠成直排 */
+   統計列在窄螢幕上固定欄數並排, 不要因為minmax太大而擠成直排(狗/貓兩張、總覽體重/BCS/目標三張) */
 @media (max-width: 480px) {
   main { padding: 12px; }
   .panel { padding: 16px; border-radius: 14px; }
   header { padding: 12px 16px; }
-  #petSummary.card-grid, #tab-overview .card-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  #petSummary.card-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  #tab-overview .card-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .stat-card { padding: 10px 6px; }
   .stat-label { font-size: .7rem; }
   .stat-value { font-size: 1.1rem; }

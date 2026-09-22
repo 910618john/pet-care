@@ -90,7 +90,6 @@ async function loadPets() {
   const dogCount = pets.filter((p) => p.species === "dog").length;
   const catCount = pets.filter((p) => p.species === "cat").length;
   summary.innerHTML = `
-    <div class="card stat-card"><div class="stat-label">🐾 寵物總數</div><div class="stat-value">${pets.length}</div></div>
     <div class="card stat-card"><div class="stat-label">🐶 狗</div><div class="stat-value">${dogCount}</div></div>
     <div class="card stat-card"><div class="stat-label">🐱 貓</div><div class="stat-value">${catCount}</div></div>
   `;

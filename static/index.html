@@ -18,15 +18,17 @@
 <header>
   <div class="header-top">
     <h1>🐾 寵物健康管理</h1>
-    <nav class="top-nav">
-      <button data-view="pets" type="button" class="nav-btn active">我的寵物</button>
-      <button data-view="products" type="button" class="nav-btn">用品比價</button>
-    </nav>
-  </div>
-  <div class="statusbar">
-    <button id="pushToggleBtn" type="button" class="push-toggle-btn">🔔 開啟提醒推播</button>
+    <div class="statusbar">
+      <button id="pushToggleBtn" type="button" class="push-toggle-btn">🔔 開啟提醒推播</button>
+    </div>
   </div>
   <div id="pushStatus" class="push-status"></div>
+  <nav class="top-tabs">
+    <button data-view="pets" type="button" class="top-tab-btn active"><span class="top-tab-icon">🐾</span>我的寵物</button>
+    <button data-view="expenses" type="button" class="top-tab-btn"><span class="top-tab-icon">💰</span>每月花費</button>
+    <button data-view="status" type="button" class="top-tab-btn"><span class="top-tab-icon">📋</span>寵物狀態</button>
+    <button data-view="products" type="button" class="top-tab-btn"><span class="top-tab-icon">🛒</span>用品價格</button>
+  </nav>
 </header>
 
 <main>
@@ -213,6 +215,57 @@
         <h3>📜 提醒歷史紀錄</h3>
         <ul id="reminderHistoryList" class="record-list"></ul>
       </div>
+    </div>
+  </section>
+
+  <!-- ===== 每月花費 ===== -->
+  <section id="expensesView" class="view" style="display:none;">
+    <div class="panel">
+      <div class="section-head">
+        <h2>💰 每月花費</h2>
+      </div>
+      <div class="month-nav">
+        <button id="expensePrevMonth" type="button" class="secondary-btn">← 上個月</button>
+        <span id="expenseMonthLabel" class="month-label"></span>
+        <button id="expenseNextMonth" type="button" class="secondary-btn">下個月 →</button>
+      </div>
+      <div class="card-grid">
+        <div class="card stat-card"><div class="stat-label">💰 本月總花費</div><div id="expenseMonthTotal" class="stat-value">NT$0</div></div>
+      </div>
+      <div class="card accent-diet">
+        <h3>📊 近6個月趨勢</h3>
+        <canvas id="expenseTrendChart" height="90"></canvas>
+      </div>
+      <div class="card">
+        <h3>🧾 分類統計</h3>
+        <ul id="expenseCategoryList" class="record-list"></ul>
+      </div>
+      <div class="card accent-reminder">
+        <h3>➕ 新增花費</h3>
+        <form id="expenseForm" class="inline-form">
+          <select name="category" required>
+            <option value="">選分類</option>
+          </select>
+          <input type="number" step="0.01" name="amount" placeholder="金額" required>
+          <input type="date" name="expense_date" required>
+          <select name="pet_id">
+            <option value="">不歸屬特定寵物</option>
+          </select>
+          <input type="text" name="notes" placeholder="備註">
+          <button type="submit">新增</button>
+        </form>
+        <ul id="expenseList" class="record-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 寵物狀態總覽 ===== -->
+  <section id="statusView" class="view" style="display:none;">
+    <div class="panel">
+      <div class="section-head">
+        <h2>📋 寵物狀態</h2>
+      </div>
+      <div id="statusCards" class="pet-cards"></div>
     </div>
   </section>
 

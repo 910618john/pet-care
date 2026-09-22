@@ -278,6 +278,111 @@ def pet_timeline(pet_id):
     return jsonify(events)
 
 
+# ============================= 花費記錄 =============================
+EXPENSE_CATEGORIES = ("飼料", "零食", "看診", "疫苗驅蟲", "美容", "保健品", "用品", "其他")
+
+
+@app.route("/api/expenses", methods=["GET"])
+def list_expenses():
+    month = request.args.get("month")  # "YYYY-MM", 不帶就回全部
+    with db.get_conn() as conn:
+        if month:
+            rows = conn.execute(
+                "SELECT e.*, p.name AS pet_name FROM expenses e LEFT JOIN pets p ON p.id = e.pet_id "
+                "WHERE substr(e.expense_date, 1, 7) = ? ORDER BY e.expense_date DESC, e.id DESC",
+                (month,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT e.*, p.name AS pet_name FROM expenses e LEFT JOIN pets p ON p.id = e.pet_id "
+                "ORDER BY e.expense_date DESC, e.id DESC"
+            ).fetchall()
+    return jsonify(db.rows_to_dicts(rows))
+
+
+@app.route("/api/expenses", methods=["POST"])
+def create_expense():
+    body = request.get_json(silent=True) or {}
+    category = body.get("category")
+    amount = body.get("amount")
+    expense_date = body.get("expense_date")
+    if category not in EXPENSE_CATEGORIES or not amount or not expense_date:
+        return jsonify({"ok": False, "error": f"category(需為{'/'.join(EXPENSE_CATEGORIES)})/amount/expense_date為必填"}), 400
+    with db.get_conn() as conn:
+        cur = conn.execute(
+            "INSERT INTO expenses (pet_id, category, amount, expense_date, notes) VALUES (?, ?, ?, ?, ?)",
+            (body.get("pet_id"), category, float(amount), expense_date, body.get("notes")),
+        )
+        expense_id = cur.lastrowid
+    return jsonify({"ok": True, "id": expense_id})
+
+
+@app.route("/api/expenses/<int:expense_id>", methods=["DELETE"])
+def delete_expense(expense_id):
+    with db.get_conn() as conn:
+        conn.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
+    return jsonify({"ok": True})
+
+
+@app.route("/api/expenses/summary")
+def expenses_summary():
+    """近months個月(含當月)每月總花費, 由舊到新排序, 給趨勢圖用。"""
+    months = int(request.args.get("months", 6))
+    today = date.today()
+    month_keys = []
+    y, m = today.year, today.month
+    for _ in range(months):
+        month_keys.append(f"{y:04d}-{m:02d}")
+        m -= 1
+        if m == 0:
+            m, y = 12, y - 1
+    month_keys.reverse()
+    with db.get_conn() as conn:
+        rows = conn.execute(
+            "SELECT substr(expense_date, 1, 7) AS month, SUM(amount) AS total FROM expenses GROUP BY month"
+        ).fetchall()
+    totals = {r["month"]: r["total"] for r in rows}
+    return jsonify([{"month": mk, "total": totals.get(mk, 0)} for mk in month_keys])
+
+
+# ============================= 寵物狀態總覽 (跨所有寵物的健康快照) =============================
+@app.route("/api/pets/status")
+def pets_status():
+    with db.get_conn() as conn:
+        pets = db.rows_to_dicts(conn.execute("SELECT * FROM pets ORDER BY id").fetchall())
+        weight_rows = conn.execute(
+            "SELECT pet_id, weight_kg, recorded_at FROM weight_logs ORDER BY pet_id, recorded_at DESC, id DESC"
+        ).fetchall()
+        bcs_rows = conn.execute(
+            "SELECT pet_id, score, recorded_at FROM bcs_logs ORDER BY pet_id, recorded_at DESC, id DESC"
+        ).fetchall()
+        vaccine_records = db.rows_to_dicts(conn.execute("SELECT * FROM vaccine_records").fetchall())
+        deworming_records = db.rows_to_dicts(conn.execute("SELECT * FROM deworming_records").fetchall())
+        custom_reminders = db.rows_to_dicts(conn.execute("SELECT * FROM custom_reminders").fetchall())
+
+    latest_weight, latest_bcs = {}, {}
+    for r in weight_rows:
+        latest_weight.setdefault(r["pet_id"], {"weight_kg": r["weight_kg"], "recorded_at": r["recorded_at"]})
+    for r in bcs_rows:
+        latest_bcs.setdefault(r["pet_id"], {"score": r["score"], "recorded_at": r["recorded_at"]})
+
+    # notified_keys給空set: 這裡要的是「現在算下來有幾件事到期」的即時快照, 不受背景排程是否已經推播過影響
+    due = reminders.collect_due_reminders(pets, vaccine_records, deworming_records, custom_reminders, date.today(), set())
+    due_count_by_pet = {}
+    for item in due:
+        due_count_by_pet[item["pet_id"]] = due_count_by_pet.get(item["pet_id"], 0) + 1
+
+    result = []
+    for pet in pets:
+        result.append({
+            **pet,
+            "latest_weight": latest_weight.get(pet["id"]),
+            "latest_bcs": latest_bcs.get(pet["id"]),
+            "due_reminders": due_count_by_pet.get(pet["id"], 0),
+        })
+    return jsonify(result)
+
+
 # ============================= 到期提醒 (由GitHub Actions cron觸發) =============================
 @app.route("/api/internal/check-reminders", methods=["GET", "POST"])
 def check_reminders():

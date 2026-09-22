@@ -53,27 +53,28 @@ function updateBreedOptions(species) {
   }
 }
 
-// ======================= 頂層導覽 (我的寵物 / 用品比價) =======================
-document.querySelectorAll(".top-nav .nav-btn").forEach((btn) => {
+// ======================= 頂層導覽 (我的寵物 / 每月花費 / 寵物狀態 / 用品價格) =======================
+const TOP_VIEW_SECTIONS = {
+  pets: ["petListView", "petDashboard"],
+  expenses: ["expensesView"],
+  status: ["statusView"],
+  products: ["productListView", "productDashboard"],
+};
+const ALL_TOP_SECTIONS = Object.values(TOP_VIEW_SECTIONS).flat();
+
+document.querySelectorAll(".top-tabs .top-tab-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTopView(btn.dataset.view));
 });
 
 function switchTopView(view) {
-  document.querySelectorAll(".top-nav .nav-btn").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
-  if (view === "pets") {
-    $("productListView").style.display = "none";
-    $("productDashboard").style.display = "none";
-    $("petListView").style.display = "block";
-    $("petDashboard").style.display = "none";
-    loadPets();
-  } else {
-    $("petListView").style.display = "none";
-    $("petDashboard").style.display = "none";
-    $("productDashboard").style.display = "none";
-    $("productListView").style.display = "block";
-    loadPlatformStatus();
-    loadProducts();
-  }
+  document.querySelectorAll(".top-tabs .top-tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  for (const id of ALL_TOP_SECTIONS) $(id).style.display = "none";
+  const [primaryId] = TOP_VIEW_SECTIONS[view];
+  $(primaryId).style.display = "block";
+  if (view === "pets") loadPets();
+  else if (view === "expenses") loadExpensesView();
+  else if (view === "status") loadPetStatus();
+  else if (view === "products") { loadPlatformStatus(); loadProducts(); }
 }
 
 // ======================= 寵物列表 =======================
@@ -402,6 +403,151 @@ $("dietForm").addEventListener("submit", async (e) => {
     $("dietResult").textContent = err.message;
   }
 });
+
+// ======================= 每月花費 =======================
+const EXPENSE_CATEGORIES = ["飼料", "零食", "看診", "疫苗驅蟲", "美容", "保健品", "用品", "其他"];
+let currentExpenseMonth = null; // "YYYY-MM"
+let expenseTrendChart = null;
+
+function monthKey(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; }
+function monthLabel(key) { const [y, m] = key.split("-"); return `${y}年${Number(m)}月`; }
+
+async function loadExpensesView() {
+  if (!currentExpenseMonth) currentExpenseMonth = monthKey(new Date());
+  if ($("expenseForm").category.options.length <= 1) {
+    for (const c of EXPENSE_CATEGORIES) {
+      const opt = document.createElement("option");
+      opt.value = c; opt.textContent = c;
+      $("expenseForm").category.appendChild(opt);
+    }
+  }
+  const pets = await api("/api/pets");
+  const petSelect = $("expenseForm").pet_id;
+  petSelect.innerHTML = `<option value="">不歸屬特定寵物</option>`;
+  for (const pet of pets) {
+    const opt = document.createElement("option");
+    opt.value = pet.id; opt.textContent = pet.name;
+    petSelect.appendChild(opt);
+  }
+  await Promise.all([loadExpensesForMonth(), loadExpenseTrendChart()]);
+}
+
+$("expensePrevMonth").addEventListener("click", () => {
+  const [y, m] = currentExpenseMonth.split("-").map(Number);
+  const d = new Date(y, m - 2, 1); // m是1-based, 減2再+1個月效果等於往前一個月
+  currentExpenseMonth = monthKey(d);
+  loadExpensesForMonth();
+});
+$("expenseNextMonth").addEventListener("click", () => {
+  const [y, m] = currentExpenseMonth.split("-").map(Number);
+  const d = new Date(y, m, 1); // m是1-based, 這裡剛好是下個月(0-based的話會是同月, +1後變下月)
+  currentExpenseMonth = monthKey(d);
+  loadExpensesForMonth();
+});
+
+async function loadExpensesForMonth() {
+  $("expenseMonthLabel").textContent = monthLabel(currentExpenseMonth);
+  const rows = await api(`/api/expenses?month=${currentExpenseMonth}`);
+  const total = rows.reduce((sum, r) => sum + r.amount, 0);
+  $("expenseMonthTotal").textContent = `NT$${Math.round(total).toLocaleString()}`;
+
+  const byCategory = new Map();
+  for (const r of rows) byCategory.set(r.category, (byCategory.get(r.category) || 0) + r.amount);
+  const catUl = $("expenseCategoryList");
+  catUl.innerHTML = "";
+  if (byCategory.size === 0) {
+    catUl.innerHTML = `<li class="empty-hint">📭 這個月還沒有花費紀錄</li>`;
+  } else {
+    for (const [cat, amt] of [...byCategory.entries()].sort((a, b) => b[1] - a[1])) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span><span class="category-tag cat-${cat}">${cat}</span></span><b>NT$${Math.round(amt).toLocaleString()}</b>`;
+      catUl.appendChild(li);
+    }
+  }
+
+  const listUl = $("expenseList");
+  listUl.innerHTML = "";
+  if (rows.length === 0) {
+    listUl.innerHTML = `<li class="empty-hint">🧾 這個月還沒有任何一筆紀錄</li>`;
+    return;
+  }
+  for (const r of rows) {
+    const li = document.createElement("li");
+    const span = document.createElement("span");
+    span.innerHTML = `<span class="category-tag cat-${r.category}">${r.category}</span>${r.expense_date}${r.pet_name ? " · " + escapeHtml(r.pet_name) : ""}${r.notes ? " · " + escapeHtml(r.notes) : ""}`;
+    const right = document.createElement("span");
+    right.innerHTML = `<b>NT$${Math.round(r.amount).toLocaleString()}</b> `;
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "刪除"; delBtn.className = "del-btn";
+    delBtn.addEventListener("click", async () => { await api(`/api/expenses/${r.id}`, { method: "DELETE" }); await loadExpensesForMonth(); await loadExpenseTrendChart(); });
+    right.appendChild(delBtn);
+    li.appendChild(span); li.appendChild(right);
+    listUl.appendChild(li);
+  }
+}
+
+async function loadExpenseTrendChart() {
+  const rows = await api("/api/expenses/summary?months=6");
+  const ctx = $("expenseTrendChart").getContext("2d");
+  if (expenseTrendChart) expenseTrendChart.destroy();
+  expenseTrendChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: rows.map((r) => monthLabel(r.month)),
+      datasets: [{ label: "花費", data: rows.map((r) => r.total), backgroundColor: "#e08a3e99", borderRadius: 4 }],
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: "TWD" } } } },
+  });
+}
+
+$("expenseForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const body = {
+    category: form.category.value,
+    amount: Number(form.amount.value),
+    expense_date: form.expense_date.value,
+    pet_id: form.pet_id.value ? Number(form.pet_id.value) : null,
+    notes: form.notes.value.trim() || null,
+  };
+  try {
+    await api("/api/expenses", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    form.reset();
+    currentExpenseMonth = body.expense_date.slice(0, 7);
+    await loadExpensesForMonth();
+    await loadExpenseTrendChart();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+// ======================= 寵物狀態總覽 =======================
+async function loadPetStatus() {
+  const pets = await api("/api/pets/status");
+  const container = $("statusCards");
+  container.innerHTML = "";
+  if (pets.length === 0) {
+    container.innerHTML = `<div class="empty-hint">📋 還沒有寵物資料，先到「我的寵物」新增一隻吧！</div>`;
+    return;
+  }
+  for (const pet of pets) {
+    const card = document.createElement("div");
+    card.className = `pet-card status-card species-${pet.species}`;
+    const age = formatAge(pet.birthday);
+    card.innerHTML = `
+      ${pet.due_reminders > 0 ? `<span class="status-badge">${pet.due_reminders}</span>` : ""}
+      <div class="emoji">${SPECIES_EMOJI[pet.species] || "🐾"}</div>
+      <h3>${escapeHtml(pet.name)}</h3>
+      <p>${escapeHtml(pet.breed || "")}${age ? " · " + age : ""}</p>
+      <div class="status-row">
+        <span>⚖️ ${pet.latest_weight ? pet.latest_weight.weight_kg + "kg" : "—"}</span>
+        <span>📏 ${pet.latest_bcs ? pet.latest_bcs.score + "/9" : "—"}</span>
+      </div>
+    `;
+    card.addEventListener("click", () => { switchTopView("pets"); openDashboard(pet.id); });
+    container.appendChild(card);
+  }
+}
 
 // ======================= 用品比價 =======================
 const PLATFORM_LABELS = { pchome: "PChome" };

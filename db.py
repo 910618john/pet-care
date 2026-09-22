@@ -86,6 +86,17 @@ CREATE TABLE IF NOT EXISTS lab_results (
     notes TEXT
 );
 
+-- 花費記錄, 獨立於其他紀錄之外(不是從看診/飲食紀錄推算), pet_id可為NULL代表這筆支出不歸屬單一寵物
+-- (例如一次買多隻共用的飼料/家用清潔用品)
+CREATE TABLE IF NOT EXISTS expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pet_id INTEGER REFERENCES pets(id) ON DELETE SET NULL,
+    category TEXT NOT NULL,
+    amount REAL NOT NULL,
+    expense_date TEXT NOT NULL,
+    notes TEXT
+);
+
 CREATE TABLE IF NOT EXISTS custom_reminders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     pet_id INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,

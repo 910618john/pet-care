@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: pet-care
+    env: python
+    plan: free   # 免費方案：閒置一段時間會自動休眠，第一個請求會比較慢（冷啟動），到期提醒改用外部
+                 # GitHub Actions cron呼叫/api/internal/check-reminders喚醒觸發，不依賴常駐背景執行緒
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --timeout 60 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: INTERNAL_TOKEN
+        sync: false   # 手動到Render後台設定一組隨機字串, 跟GitHub repo secret的同一組token要一致

@@ -1,0 +1,13 @@
+{
+  "name": "寵物健康管理",
+  "short_name": "寵物管理",
+  "description": "個人用多寵物健康日誌、飲食熱量計算、到期提醒",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff8f0",
+  "theme_color": "#fff8f0",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

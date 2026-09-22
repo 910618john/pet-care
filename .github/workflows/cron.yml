@@ -1,0 +1,26 @@
+name: check-reminders
+
+on:
+  schedule:
+    - cron: "0 1 * * *"  # 每天 UTC 01:00 (台灣時間 09:00) 檢查一次到期提醒
+    - cron: "0 */12 * * *"  # 每12小時跑一次寵物用品比價抓取
+  workflow_dispatch: {}   # 可以在GitHub Actions頁面手動觸發一次, 方便部署後驗證(會同時觸發兩支)
+
+jobs:
+  check-reminders:
+    # workflow_dispatch(手動觸發)沒有github.event.schedule, 兩個job都會跑, 方便部署後一次驗證兩支;
+    # 排程觸發時只在對應的cron字串那次執行, 兩個job才不會每次觸發都一起跑
+    if: github.event_name != 'schedule' || github.event.schedule == '0 1 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call check-reminders endpoint
+        run: |
+          curl -sf -X POST "${{ secrets.PET_CARE_URL }}/api/internal/check-reminders?token=${{ secrets.PET_CARE_INTERNAL_TOKEN }}"
+
+  run-product-scrape:
+    if: github.event_name != 'schedule' || github.event.schedule == '0 */12 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call run-product-scrape endpoint
+        run: |
+          curl -sf -X POST "${{ secrets.PET_CARE_URL }}/api/internal/run-product-scrape?token=${{ secrets.PET_CARE_INTERNAL_TOKEN }}"

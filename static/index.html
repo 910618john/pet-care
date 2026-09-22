@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>寵物健康管理</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#fff8f0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="寵物管理">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <h1>🐾 寵物健康管理</h1>
+    <nav class="top-nav">
+      <button data-view="pets" type="button" class="nav-btn active">我的寵物</button>
+      <button data-view="products" type="button" class="nav-btn">用品比價</button>
+    </nav>
+  </div>
+  <div class="statusbar">
+    <button id="pushToggleBtn" type="button" class="push-toggle-btn">🔔 開啟提醒推播</button>
+  </div>
+  <div id="pushStatus" class="push-status"></div>
+</header>
+
+<main>
+  <!-- ===== 寵物列表 ===== -->
+  <section id="petListView" class="view">
+    <div class="section-head">
+      <h2>我的寵物</h2>
+      <button id="addPetBtn" type="button" class="primary-btn">+ 新增寵物</button>
+    </div>
+    <div id="petCards" class="pet-cards"></div>
+  </section>
+
+  <!-- ===== 寵物儀表板 ===== -->
+  <section id="petDashboard" class="view" style="display:none;">
+    <button id="backBtn" type="button" class="back-btn">← 返回寵物列表</button>
+    <div class="section-head">
+      <h2 id="dashPetName"></h2>
+      <button id="editPetBtn" type="button" class="secondary-btn">編輯資料</button>
+      <button id="deletePetBtn" type="button" class="danger-btn">刪除寵物</button>
+    </div>
+    <p id="dashPetMeta" class="pet-meta"></p>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="overview">總覽</button>
+      <button class="tab-btn" data-tab="health">健康</button>
+      <button class="tab-btn" data-tab="diet">飲食</button>
+      <button class="tab-btn" data-tab="reminders">提醒</button>
+    </div>
+
+    <!-- 總覽 -->
+    <div id="tab-overview" class="tab-panel active">
+      <div class="card-grid">
+        <div class="card stat-card">
+          <div class="stat-label">最新體重</div>
+          <div id="statWeight" class="stat-value">—</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">體態評分 (BCS)</div>
+          <div id="statBcs" class="stat-value">—</div>
+        </div>
+        <div class="card stat-card" id="weightGoalCard">
+          <div class="stat-label">體重目標</div>
+          <div id="statWeightGoal" class="stat-value">—</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>最近動態</h3>
+        <ul id="timelinePreview" class="record-list"></ul>
+      </div>
+    </div>
+
+    <!-- 健康 -->
+    <div id="tab-health" class="tab-panel">
+      <div class="card">
+        <h3>體重趨勢</h3>
+        <canvas id="weightChart" height="90"></canvas>
+        <form id="weightForm" class="inline-form">
+          <input type="number" step="0.01" name="weight_kg" placeholder="體重(kg)" required>
+          <input type="date" name="recorded_at" required>
+          <button type="submit">新增</button>
+        </form>
+        <ul id="weightList" class="record-list"></ul>
+      </div>
+
+      <div class="card">
+        <h3>體態評分 (BCS 1~9)</h3>
+        <p class="hint">1~3 過瘦、4~5 理想、6~9 過重，只是通用起點，實際以獸醫觸診評估為準。</p>
+        <form id="bcsForm" class="inline-form">
+          <input type="number" name="score" min="1" max="9" placeholder="評分(1-9)" required>
+          <input type="date" name="recorded_at" required>
+          <input type="text" name="notes" placeholder="備註">
+          <button type="submit">新增</button>
+        </form>
+        <ul id="bcsList" class="record-list"></ul>
+      </div>
+
+      <div class="card">
+        <h3>看診紀錄</h3>
+        <form id="vetForm" class="inline-form">
+          <input type="date" name="visit_date" required>
+          <input type="text" name="reason" placeholder="原因">
+          <input type="text" name="notes" placeholder="備註">
+          <button type="submit">新增</button>
+        </form>
+        <ul id="vetList" class="record-list"></ul>
+      </div>
+
+      <div class="card">
+        <h3>疫苗紀錄</h3>
+        <form id="vaccineForm" class="inline-form">
+          <input type="text" name="item_name" placeholder="疫苗項目" required>
+          <input type="date" name="given_date" required>
+          <input type="date" name="next_due_date" placeholder="下次到期日">
+          <button type="submit">新增</button>
+        </form>
+        <ul id="vaccineList" class="record-list"></ul>
+      </div>
+
+      <div class="card">
+        <h3>驅蟲紀錄</h3>
+        <form id="dewormingForm" class="inline-form">
+          <input type="text" name="item_name" placeholder="驅蟲項目" required>
+          <input type="date" name="given_date" required>
+          <input type="date" name="next_due_date" placeholder="下次到期日">
+          <button type="submit">新增</button>
+        </form>
+        <ul id="dewormingList" class="record-list"></ul>
+      </div>
+
+      <div class="card">
+        <h3>檢驗數值</h3>
+        <form id="labForm" class="inline-form">
+          <input type="date" name="test_date" required>
+          <input type="text" name="item_name" placeholder="項目(例如: ALT/BUN)" required>
+          <input type="number" step="any" name="value" placeholder="數值">
+          <input type="text" name="unit" placeholder="單位">
+          <input type="text" name="ref_range" placeholder="參考範圍">
+          <button type="submit">新增</button>
+        </form>
+        <ul id="labList" class="record-list"></ul>
+      </div>
+
+      <div class="card">
+        <h3>病史時間線</h3>
+        <ul id="timelineFull" class="record-list"></ul>
+      </div>
+    </div>
+
+    <!-- 飲食 -->
+    <div id="tab-diet" class="tab-panel">
+      <div class="card">
+        <h3>飲食熱量計算</h3>
+        <form id="dietForm" class="inline-form">
+          <input type="number" step="0.01" name="weight_kg" placeholder="體重(kg, 留空用最新紀錄)">
+          <select id="foodPresetSelect">
+            <option value="">常見飼料快速帶入(選填)</option>
+          </select>
+          <input type="number" name="food_kcal_per_100g" placeholder="飼料熱量(kcal/100g, 選填)">
+          <input type="number" name="meals_per_day" placeholder="每日餐數(選填)" min="1">
+          <button type="submit">計算</button>
+        </form>
+        <div id="dietResult" class="diet-result"></div>
+      </div>
+
+      <div class="card">
+        <h3>飲食紀錄</h3>
+        <form id="dietEntryForm" class="inline-form">
+          <input type="text" name="food_name" placeholder="食物名稱" required>
+          <input type="number" step="0.1" name="amount_grams" placeholder="份量(g)">
+          <input type="date" name="entry_date" required>
+          <button type="submit">新增</button>
+        </form>
+        <ul id="dietEntryList" class="record-list"></ul>
+      </div>
+    </div>
+
+    <!-- 提醒 -->
+    <div id="tab-reminders" class="tab-panel">
+      <div class="card">
+        <h3>自訂提醒</h3>
+        <form id="reminderForm" class="inline-form">
+          <input type="text" name="title" placeholder="提醒內容" required>
+          <select name="category">
+            <option value="other">其他</option>
+            <option value="洗牙">洗牙</option>
+            <option value="美容洗澡">美容洗澡</option>
+            <option value="趾甲修剪">趾甲修剪</option>
+            <option value="心絲蟲預防">心絲蟲預防</option>
+            <option value="除蚤">除蚤</option>
+            <option value="回診">回診</option>
+          </select>
+          <input type="date" name="due_date" required>
+          <input type="number" name="remind_days_before" placeholder="提前幾天提醒(預設3)">
+          <input type="number" name="repeat_days" placeholder="週期重複天數(選填, 例如30)">
+          <button type="submit">新增</button>
+        </form>
+        <ul id="reminderList" class="record-list"></ul>
+      </div>
+
+      <div class="card">
+        <h3>提醒歷史紀錄</h3>
+        <ul id="reminderHistoryList" class="record-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 用品比價列表 ===== -->
+  <section id="productListView" class="view" style="display:none;">
+    <div class="section-head">
+      <h2>用品比價</h2>
+      <button id="addProductBtn" type="button" class="primary-btn">+ 新增商品</button>
+    </div>
+    <div id="platformStatus" class="platform-status"></div>
+    <div id="productCards" class="pet-cards"></div>
+  </section>
+
+  <!-- ===== 商品比價儀表板 ===== -->
+  <section id="productDashboard" class="view" style="display:none;">
+    <button id="productBackBtn" type="button" class="back-btn">← 返回用品比價</button>
+    <div class="section-head">
+      <h2 id="dashProductName"></h2>
+      <button id="deleteProductBtn" type="button" class="danger-btn">刪除商品</button>
+    </div>
+    <div class="card">
+      <h3>歷史價格走勢 (TWD)</h3>
+      <canvas id="productPriceChart" height="100"></canvas>
+      <p class="hint">每個點是一次排程抓取當下的價格。</p>
+    </div>
+    <div class="card">
+      <h3>目前在架商品</h3>
+      <ul id="productListingList" class="record-list"></ul>
+    </div>
+  </section>
+</main>
+
+<div id="petFormModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3 id="petFormTitle">新增寵物</h3>
+    <form id="petForm">
+      <label>名字 <input type="text" name="name" required></label>
+      <label>物種
+        <select name="species" required>
+          <option value="dog">狗</option>
+          <option value="cat">貓</option>
+        </select>
+      </label>
+      <label>品種 <input type="text" name="breed"></label>
+      <label>生日 <input type="date" name="birthday"></label>
+      <label>性別
+        <select name="sex">
+          <option value="unknown">未知</option>
+          <option value="m">公</option>
+          <option value="f">母</option>
+        </select>
+      </label>
+      <label><input type="checkbox" name="neutered"> 已絕育</label>
+      <label>體重目標(kg, 選填) <input type="number" step="0.01" name="weight_goal_kg"></label>
+      <div class="modal-actions">
+        <button type="button" id="petFormCancel" class="secondary-btn">取消</button>
+        <button type="submit" class="primary-btn">儲存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="productFormModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>新增追蹤商品</h3>
+    <form id="productForm">
+      <label>商品名稱 <input type="text" name="name" required placeholder="例如: 渴望六種魚 11.4kg"></label>
+      <label>分類
+        <select name="category" required>
+          <option value="飼料">飼料</option>
+          <option value="零食">零食</option>
+          <option value="保健品">保健品</option>
+          <option value="用品">用品</option>
+        </select>
+      </label>
+      <label>搜尋關鍵字 <input type="text" name="keyword" required placeholder="拿去平台搜尋用的關鍵字"></label>
+      <div class="modal-actions">
+        <button type="button" id="productFormCancel" class="secondary-btn">取消</button>
+        <button type="submit" class="primary-btn">新增</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

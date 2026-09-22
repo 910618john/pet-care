@@ -32,11 +32,14 @@
 <main>
   <!-- ===== 寵物列表 ===== -->
   <section id="petListView" class="view">
-    <div class="section-head">
-      <h2>我的寵物</h2>
-      <button id="addPetBtn" type="button" class="primary-btn">+ 新增寵物</button>
+    <div class="panel">
+      <div class="section-head">
+        <h2>我的寵物</h2>
+        <button id="addPetBtn" type="button" class="primary-btn">+ 新增寵物</button>
+      </div>
+      <div id="petSummary" class="card-grid"></div>
+      <div id="petCards" class="pet-cards"></div>
     </div>
-    <div id="petCards" class="pet-cards"></div>
   </section>
 
   <!-- ===== 寵物儀表板 ===== -->
@@ -215,12 +218,14 @@
 
   <!-- ===== 用品比價列表 ===== -->
   <section id="productListView" class="view" style="display:none;">
-    <div class="section-head">
-      <h2>🛒 用品比價</h2>
-      <button id="addProductBtn" type="button" class="primary-btn">+ 新增商品</button>
+    <div class="panel">
+      <div class="section-head">
+        <h2>🛒 用品比價</h2>
+        <button id="addProductBtn" type="button" class="primary-btn">+ 新增商品</button>
+      </div>
+      <div id="platformStatus" class="platform-status"></div>
+      <div id="productCards" class="pet-cards"></div>
     </div>
-    <div id="platformStatus" class="platform-status"></div>
-    <div id="productCards" class="pet-cards"></div>
   </section>
 
   <!-- ===== 商品比價儀表板 ===== -->

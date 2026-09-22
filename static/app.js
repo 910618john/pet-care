@@ -64,11 +64,20 @@ function switchTopView(view) {
 async function loadPets() {
   const pets = await api("/api/pets");
   const container = $("petCards");
+  const summary = $("petSummary");
   container.innerHTML = "";
   if (pets.length === 0) {
+    summary.innerHTML = "";
     container.innerHTML = `<div class="empty-hint">🐾 還沒有寵物資料，點右上「+ 新增寵物」開始記錄第一隻的健康日誌吧！</div>`;
     return;
   }
+  const dogCount = pets.filter((p) => p.species === "dog").length;
+  const catCount = pets.filter((p) => p.species === "cat").length;
+  summary.innerHTML = `
+    <div class="card stat-card"><div class="stat-label">🐾 寵物總數</div><div class="stat-value">${pets.length}</div></div>
+    <div class="card stat-card"><div class="stat-label">🐶 狗</div><div class="stat-value">${dogCount}</div></div>
+    <div class="card stat-card"><div class="stat-label">🐱 貓</div><div class="stat-value">${catCount}</div></div>
+  `;
   for (const pet of pets) {
     const card = document.createElement("div");
     card.className = `pet-card species-${pet.species}`;

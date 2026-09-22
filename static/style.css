@@ -54,19 +54,26 @@ header h1 { margin: 0; font-size: 1.3rem; }
 
 .statusbar { display: flex; gap: 12px; align-items: center; }
 
-main { max-width: 760px; margin: 0 auto; padding: 20px; }
+main { max-width: 860px; margin: 0 auto; padding: 20px; }
 
-.section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 2px 14px rgba(43,35,32,.05);
+}
+
+.section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .section-head h2 { margin: 0; flex: 1; }
 
-.pet-cards { display: flex; flex-wrap: wrap; gap: 12px; }
+.pet-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
 
 .pet-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 16px;
-  width: 160px;
   cursor: pointer;
   transition: box-shadow .15s, transform .15s, border-color .15s;
 }

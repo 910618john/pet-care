@@ -154,5 +154,11 @@ main { max-width: 760px; margin: 0 auto; padding: 20px; }
   background: white; border-radius: 12px; padding: 20px; width: 320px; max-width: 90vw;
 }
 .modal-content label { display: block; margin-bottom: 10px; font-size: .9rem; }
-.modal-content input, .modal-content select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; }
+.modal-content input:not([type="checkbox"]), .modal-content select {
+  width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px;
+}
+.modal-content label:has(input[type="checkbox"]) {
+  display: flex; align-items: center; gap: 6px;
+}
+.modal-content input[type="checkbox"] { width: auto; margin: 0; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }

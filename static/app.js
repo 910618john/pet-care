@@ -17,6 +17,26 @@ function escapeHtml(s) {
 
 const SPECIES_EMOJI = { dog: "🐶", cat: "🐱" };
 
+// 品種輸入框的建議清單(datalist), 只是常見選項方便快速選, 使用者仍可自己打任何字(混種/罕見品種等)
+const BREED_SUGGESTIONS = {
+  dog: ["米克斯(混種)", "柴犬", "貴賓犬(泰迪)", "法國鬥牛犬", "黃金獵犬", "拉布拉多", "吉娃娃", "雪納瑞",
+        "博美", "臘腸犬", "邊境牧羊犬", "哈士奇", "比熊犬", "馬爾濟斯", "巴哥犬", "約克夏", "秋田犬",
+        "西施犬", "米格魯", "大麥町", "德國牧羊犬"],
+  cat: ["米克斯(混種)", "中華田園貓", "三花貓", "英國短毛貓", "美國短毛貓", "布偶貓", "波斯貓",
+        "蘇格蘭摺耳貓", "暹羅貓", "緬因貓", "孟加拉貓", "俄羅斯藍貓", "挪威森林貓", "異國短毛貓",
+        "埃及貓", "曼赤肯貓"],
+};
+
+function updateBreedOptions(species) {
+  const list = $("breedOptions");
+  list.innerHTML = "";
+  for (const breed of BREED_SUGGESTIONS[species] || []) {
+    const opt = document.createElement("option");
+    opt.value = breed;
+    list.appendChild(opt);
+  }
+}
+
 // ======================= 頂層導覽 (我的寵物 / 用品比價) =======================
 document.querySelectorAll(".top-nav .nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTopView(btn.dataset.view));
@@ -60,6 +80,7 @@ function openPetForm(pet) {
   $("petFormTitle").textContent = pet ? "編輯寵物" : "新增寵物";
   const form = $("petForm");
   form.reset();
+  updateBreedOptions(pet ? pet.species : form.species.value);
   if (pet) {
     form.name.value = pet.name;
     form.species.value = pet.species;
@@ -67,12 +88,14 @@ function openPetForm(pet) {
     form.birthday.value = pet.birthday || "";
     form.sex.value = pet.sex || "unknown";
     form.neutered.checked = !!pet.neutered;
+    form.microchip_id.value = pet.microchip_id || "";
     form.weight_goal_kg.value = pet.weight_goal_kg ?? "";
   }
   form.dataset.editingId = pet ? pet.id : "";
   $("petFormModal").style.display = "flex";
 }
 $("petFormCancel").addEventListener("click", () => { $("petFormModal").style.display = "none"; });
+$("petForm").species.addEventListener("change", (e) => updateBreedOptions(e.target.value));
 
 $("petForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -84,6 +107,7 @@ $("petForm").addEventListener("submit", async (e) => {
     birthday: form.birthday.value || null,
     sex: form.sex.value,
     neutered: form.neutered.checked,
+    microchip_id: form.microchip_id.value.trim() || null,
     weight_goal_kg: form.weight_goal_kg.value ? Number(form.weight_goal_kg.value) : null,
   };
   const editingId = form.dataset.editingId;
@@ -110,7 +134,7 @@ async function openDashboard(petId) {
   $("petListView").style.display = "none";
   $("petDashboard").style.display = "block";
   $("dashPetName").textContent = `${SPECIES_EMOJI[pet.species] || "🐾"} ${pet.name}`;
-  $("dashPetMeta").textContent = [pet.breed, pet.birthday ? `生日 ${pet.birthday}` : "", pet.neutered ? "已絕育" : "未絕育"].filter(Boolean).join(" · ");
+  $("dashPetMeta").textContent = [pet.breed, pet.birthday ? `生日 ${pet.birthday}` : "", pet.neutered ? "已絕育" : "未絕育", pet.microchip_id ? `晶片 ${pet.microchip_id}` : ""].filter(Boolean).join(" · ");
   $("editPetBtn").onclick = () => openPetForm(pet);
   $("deletePetBtn").onclick = async () => {
     if (!confirm(`確定要刪除「${pet.name}」及其所有紀錄嗎？`)) return;

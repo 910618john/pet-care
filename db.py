@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS pets (
     birthday TEXT,
     sex TEXT CHECK(sex IN ('m', 'f', 'unknown')) DEFAULT 'unknown',
     neutered INTEGER NOT NULL DEFAULT 0,
+    microchip_id TEXT,
     weight_goal_kg REAL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

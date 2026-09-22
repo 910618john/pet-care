@@ -92,7 +92,8 @@ def create_pet():
         return jsonify({"ok": False, "error": "name和species(dog/cat)為必填"}), 400
     with db.get_conn() as conn:
         cur = conn.execute(
-            "INSERT INTO pets (name, species, breed, birthday, sex, neutered, weight_goal_kg) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO pets (name, species, breed, birthday, sex, neutered, microchip_id, weight_goal_kg) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 name,
                 species,
@@ -100,6 +101,7 @@ def create_pet():
                 body.get("birthday"),
                 body.get("sex", "unknown"),
                 1 if body.get("neutered") else 0,
+                body.get("microchip_id"),
                 body.get("weight_goal_kg"),
             ),
         )
@@ -111,7 +113,7 @@ def create_pet():
 def update_pet(pet_id):
     body = request.get_json(silent=True) or {}
     fields, values = [], []
-    for col in ("name", "species", "breed", "birthday", "sex", "weight_goal_kg"):
+    for col in ("name", "species", "breed", "birthday", "sex", "microchip_id", "weight_goal_kg"):
         if col in body:
             fields.append(f"{col} = ?")
             values.append(body[col])

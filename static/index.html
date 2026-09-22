@@ -253,7 +253,8 @@
           <option value="cat">貓</option>
         </select>
       </label>
-      <label>品種 <input type="text" name="breed"></label>
+      <label>品種 <input type="text" name="breed" list="breedOptions" placeholder="可直接打字或從建議清單選"></label>
+      <datalist id="breedOptions"></datalist>
       <label>生日 <input type="date" name="birthday"></label>
       <label>性別
         <select name="sex">
@@ -263,6 +264,7 @@
         </select>
       </label>
       <label><input type="checkbox" name="neutered"> 已絕育</label>
+      <label>晶片號碼(選填) <input type="text" name="microchip_id"></label>
       <label>體重目標(kg, 選填) <input type="number" step="0.01" name="weight_goal_kg"></label>
       <div class="modal-actions">
         <button type="button" id="petFormCancel" class="secondary-btn">取消</button>

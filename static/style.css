@@ -86,6 +86,7 @@ main { max-width: 860px; margin: 0 auto; padding: 20px; }
 .pet-card.species-cat .emoji { background: linear-gradient(135deg, #efe3f5, #e2cdf0); }
 .pet-card h3 { margin: 10px 0 4px; }
 .pet-card p { margin: 0; color: var(--muted); font-size: .85rem; }
+.pet-card .pet-card-age { margin-top: 3px; font-size: .78rem; color: var(--accent-dark); }
 
 .product-card .emoji {
   font-size: 1.5rem; width: 44px; height: 44px; border-radius: 50%;

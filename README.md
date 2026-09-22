@@ -30,7 +30,11 @@ pytest                # 跑 diet.py / reminders.py 的單元測試
 
 ## 部署 (Render 免費方案 + GitHub Actions)
 
-1. 建 GitHub repo 並 push 這個資料夾。
+1. 本機 git repo 已經 init + commit 好了（分支 `main`）。到 GitHub 新增一個空的 repo（不要勾選自動產生 README/.gitignore，不然會跟本機的檔案衝突），然後在這個資料夾執行：
+   ```bash
+   git remote add origin https://github.com/<你的帳號>/<repo名稱>.git
+   git push -u origin main
+   ```
 2. Render 新增 Web Service，選這個 repo，套用 `render.yaml`（`plan: free`）。
 3. Render 後台手動設定環境變數 `INTERNAL_TOKEN`（自己生一組隨機字串，例如 `openssl rand -hex 16`）。
 4. GitHub repo → Settings → Secrets and variables → Actions，新增：
